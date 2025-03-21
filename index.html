@@ -67,7 +67,7 @@
     }
     .calculator-form label {
       display: block;
-      margin-bottom: 10px; /* odstęp między napisem a polem input = 10px */
+      margin-bottom: 10px;
       font-size: 1.1rem;
       color: #333;
     }
@@ -78,33 +78,6 @@
       border: 1px solid #ccc;
       border-radius: 4px;
       font-size: 1rem;
-    }
-    .result-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    .result-table th,
-    .result-table td {
-      border: 1px solid #ccc;
-      padding: 10px;
-      text-align: center;
-    }
-    .result-table th {
-      background-color: #363636;
-      color: #fff;
-    }
-    .result-table th:first-child {
-      text-align: center;
-    }
-    .result-table td:first-child {
-      text-align: left;
-      padding-left: 10px;
-    }
-    .notes {
-      margin-top: 20px;
-      font-size: 0.9rem;
-      color: #555;
     }
   </style>
 </head>
@@ -134,7 +107,7 @@
             </div>
 
             <div class="form-group">
-              <label for="avgHours">Średnia liczba r-g na pracownika w miesiącu:</label>
+              <label for="avgHours">Średnia liczba r‑g na pracownika w miesiącu:</label>
               <input type="number" id="avgHours" name="avgHours" step="0.01">
             </div>
 
@@ -215,17 +188,18 @@
       var healthInsurance_total = 0;
       var revenuePerRG = 0; // cena za 1 r‑g
       var profitPerRG = 0;
-      
+      var totalRevenue = 0; // całkowity przychód
+
       if(taxMethod === "liniowy") {
         var marginPct = parseFloat(document.getElementById('marginPct').value) || 0;
         revenuePerRG = baseRGCost * (1 + marginPct/100);
-        var totalRevenue = fixedCosts * (1 + marginPct/100);
+        totalRevenue = fixedCosts * (1 + marginPct/100);
         var taxableIncome = fixedCosts * (marginPct/100);
         tax_total = 0.19 * taxableIncome;
         healthInsurance_total = Math.max(0.049 * taxableIncome, 314.96);
       } else if(taxMethod === "ryczalt") {
         var marginRyc = parseFloat(document.getElementById('marginRyc').value) || 0;
-        var totalRevenue = fixedCosts * (1 + marginRyc/100);
+        totalRevenue = fixedCosts * (1 + marginRyc/100);
         revenuePerRG = totalRevenue / totalRG;
         var rycRate = parseFloat(document.getElementById('rycRate').value) || 0;
         var rycSalary = parseFloat(document.getElementById('rycSalary').value) || 8482.47;
@@ -245,41 +219,41 @@
       profitPerRG = revenuePerRG - baseRGCost - (taxPerRG + healthInsurancePerRG);
       
       var grossRGCost = revenuePerRG * (1 + vatRate/100);
+
+      // Przygotowanie ścieżek obliczeniowych
+      var formulaBaseRGCost = `${fixedCosts.toFixed(2)} / ${totalRG.toFixed(2)} = ${baseRGCost.toFixed(2)}`;
       
-      var resultTable = `
-      <table class="result-table">
-        <tr>
-          <th>Opis</th>
-          <th>Wartość</th>
-        </tr>
-        <tr>
-          <td>Koszt r‑g (przed narzutem)</td>
-          <td>${baseRGCost.toFixed(2)} zł</td>
-        </tr>
-        <tr>
-          <td>Koszt r‑g netto(z narzutem)</td>
-          <td>${revenuePerRG.toFixed(2)} zł</td>
-        </tr>
-        <tr>
-          <td>Koszt r‑g brutto(po dodaniu VAT)</td>
-          <td>${grossRGCost.toFixed(2)} zł</td>
-        </tr>
-        <tr>
-          <td>Podatek (na 1 r‑g)</td>
-          <td>${taxPerRG.toFixed(2)} zł</td>
-        </tr>
-        <tr>
-          <td>Składka zdrowotna (na 1 r‑g)</td>
-          <td>${healthInsurancePerRG.toFixed(2)} zł</td>
-        </tr>
-        <tr>
-          <td>Zysk na 1 r‑g</td>
-          <td>${profitPerRG.toFixed(2)} zł</td>
-        </tr>
-      </table>
+      var formulaRevenuePerRG = "";
+      if(taxMethod === "liniowy") {
+          var marginPct = parseFloat(document.getElementById('marginPct').value) || 0;
+          formulaRevenuePerRG = `${baseRGCost.toFixed(2)} * (1 + ${marginPct.toFixed(2)}/100) = ${revenuePerRG.toFixed(2)}`;
+      } else if(taxMethod === "ryczalt") {
+          var marginRyc = parseFloat(document.getElementById('marginRyc').value) || 0;
+          formulaRevenuePerRG = `(${fixedCosts.toFixed(2)} * (1 + ${marginRyc.toFixed(2)}/100)) / ${totalRG.toFixed(2)} = ${revenuePerRG.toFixed(2)}`;
+      }
+
+      var formulaGrossRGCost = `${revenuePerRG.toFixed(2)} * (1 + ${vatRate.toFixed(2)}/100) = ${grossRGCost.toFixed(2)}`;
+
+      // Sekcja Wynik – wyświetlamy wartość z dopiskiem "zł" oraz ścieżkę obliczeń
+      var resultHTML = `
+        <h3>Wynik</h3>
+        <div>
+          <p>Koszt r‑g dla firmy (przed narzutem): ${baseRGCost.toFixed(2)} zł <br><small>${formulaBaseRGCost}</small></p>
+          <p>Koszt r‑g netto (z narzutem): ${revenuePerRG.toFixed(2)} zł <br><small>${formulaRevenuePerRG}</small></p>
+          <p>Koszt r‑g brutto (po dodaniu VAT): ${grossRGCost.toFixed(2)} zł <br><small>${formulaGrossRGCost}</small></p>
+        </div>
+        <h3>Składniki w r‑g</h3>
+        <div>
+          <p>Koszty działalności: ${baseRGCost.toFixed(2)} zł</p>
+          <p>Podatek dochodowy: ${taxPerRG.toFixed(2)} zł</p>
+          <p>Składka zdrowotna: ${healthInsurancePerRG.toFixed(2)} zł</p>
+          <p>Zysk na czysto: ${profitPerRG.toFixed(2)} zł</p>
+          <p>VAT: ${(grossRGCost - revenuePerRG).toFixed(2)} zł</p>
+        </div>
       `;
       
-      document.getElementById("results").innerHTML = resultTable;
+      document.getElementById("results").innerHTML = resultHTML;
+      // Usunięto sekcję graficznej prezentacji
     }
 
     toggleFields();

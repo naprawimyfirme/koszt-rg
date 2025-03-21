@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <title>Kalkulator Kosztu r‑g</title>
+  <style>
+    /* Ogólne style strony */
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #ffffff;
+    }
+    section {
+      padding: 40px 0;
+    }
+    .container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 15px;
+    }
+    /* Stylizacja inspirowana podanymi elementami */
+    .t68 {
+      background-color: #fff;
+      padding: 40px 0;
+    }
+    .t279 {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: center;
+    }
+    .t69 {
+      flex: 1;
+      max-width: 1280px;
+    }
+    .t73 {
+      font-size: 2rem;
+      margin-bottom: 20px;
+      color: #333;
+      text-align: center;
+    }
+    .dh-btn-primary {
+      background-color: #8e42ff;
+      color: #fff;
+      padding: 10px 20px;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background-color 0.3s ease;
+      display: inline-block;
+      margin-top: 15px;
+      border: none;
+      cursor: pointer;
+    }
+    .dh-btn-primary:hover {
+      background-color: #363636;
+    }
+    /* Style kalkulatora */
+    .calculator-form {
+      background-color: #f0f0f0;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .calculator-form .form-group {
+      margin-bottom: 20px;
+    }
+    .calculator-form label {
+      display: block;
+      margin-bottom: 10px; /* odstęp między napisem a polem input = 10px */
+      font-size: 1.1rem;
+      color: #333;
+    }
+    .calculator-form input, 
+    .calculator-form select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      font-size: 1rem;
+    }
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    .result-table th,
+    .result-table td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: center;
+    }
+    .result-table th {
+      background-color: #363636;
+      color: #fff;
+    }
+    .result-table th:first-child {
+      text-align: center;
+    }
+    .result-table td:first-child {
+      text-align: left;
+      padding-left: 10px;
+    }
+    .notes {
+      margin-top: 20px;
+      font-size: 0.9rem;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <section class="t68">
+    <div class="container t279">
+      <div class="t69">
+        <h2 class="t73">Kalkulator Kosztu r‑g</h2>
+        <div class="calculator-form">
+          <form id="calculatorForm">
+            <div class="form-group">
+              <label for="taxMethod">Wybierz formę opodatkowania:</label>
+              <select id="taxMethod" name="taxMethod" onchange="toggleFields()">
+                <option value="liniowy">Podatek liniowy</option>
+                <option value="ryczalt">Ryczałt od przychodów ewidencjonowanych</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="fixedCosts">Całkowite koszty firmy (zł/miesiąc):</label>
+              <input type="number" id="fixedCosts" name="fixedCosts" step="0.01">
+            </div>
+
+            <div class="form-group">
+              <label for="numOperationalEmployees">Liczba pracowników (bezpośrednio wykonujących usługi):</label>
+              <input type="number" id="numOperationalEmployees" name="numOperationalEmployees" step="1">
+            </div>
+
+            <div class="form-group">
+              <label for="avgHours">Średnia liczba r-g na pracownika w miesiącu:</label>
+              <input type="number" id="avgHours" name="avgHours" step="0.01">
+            </div>
+
+            <!-- Narzut dla liniówki -->
+            <div id="marginSection" class="form-group">
+              <label for="marginPct">Narzut firmy (%)</label>
+              <input type="number" id="marginPct" name="marginPct" step="0.01">
+            </div>
+
+            <!-- Narzut dla ryczałtu -->
+            <div id="marginRycSection" class="form-group hidden" style="display:none;">
+              <label for="marginRyc">Narzut (%):</label>
+              <input type="number" id="marginRyc" name="marginRyc" step="0.01">
+            </div>
+
+            <!-- Pola specyficzne dla ryczałtu -->
+            <div id="rycInput" class="hidden" style="display:none;">
+              <div class="form-group">
+                <label for="rycRate">Stawka ryczałtu:</label>
+                <select id="rycRate" name="rycRate">
+                  <option value="0.17">17%</option>
+                  <option value="0.15">15%</option>
+                  <option value="0.085">8,5%</option>
+                  <option value="0.055">5,5%</option>
+                  <option value="0.03">3%</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="rycSalary">Przeciętne wynagrodzenie (na potrzebe obliczenia składki zdrowotnej):</label>
+                <input type="number" id="rycSalary" name="rycSalary" step="0.01" value="8482.47">
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="vatRate">Stawka VAT (%):</label>
+              <input type="number" id="vatRate" name="vatRate" step="0.01">
+            </div>
+
+            <button type="button" class="dh-btn-primary" onclick="calculate()">Oblicz</button>
+          </form>
+        </div>
+        <div id="results"></div>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    function toggleFields() {
+      var taxMethod = document.getElementById('taxMethod').value;
+      if (taxMethod === "liniowy") {
+        document.getElementById('marginSection').style.display = "block";
+        document.getElementById('marginRycSection').style.display = "none";
+        document.getElementById('rycInput').style.display = "none";
+      } else if (taxMethod === "ryczalt") {
+        document.getElementById('marginSection').style.display = "none";
+        document.getElementById('marginRycSection').style.display = "block";
+        document.getElementById('rycInput').style.display = "block";
+      }
+    }
+
+    function calculate() {
+      var taxMethod = document.getElementById('taxMethod').value;
+      var fixedCosts = parseFloat(document.getElementById('fixedCosts').value) || 0;
+      var numOperationalEmployees = parseFloat(document.getElementById('numOperationalEmployees').value) || 0;
+      var avgHours = parseFloat(document.getElementById('avgHours').value) || 0;
+      var vatRate = parseFloat(document.getElementById('vatRate').value) || 0;
+      
+      var totalRG = numOperationalEmployees * avgHours;
+      if(totalRG === 0) {
+        alert("Liczba pracowników operacyjnych lub średnia liczba roboczogodzin nie może być zerowa.");
+        return;
+      }
+      
+      // Koszt jednej roboczogodziny (przed narzutem)
+      var baseRGCost = fixedCosts / totalRG;
+      
+      var tax_total = 0;
+      var healthInsurance_total = 0;
+      var revenuePerRG = 0; // cena za 1 r‑g
+      var profitPerRG = 0;
+      
+      if(taxMethod === "liniowy") {
+        var marginPct = parseFloat(document.getElementById('marginPct').value) || 0;
+        revenuePerRG = baseRGCost * (1 + marginPct/100);
+        var totalRevenue = fixedCosts * (1 + marginPct/100);
+        var taxableIncome = fixedCosts * (marginPct/100);
+        tax_total = 0.19 * taxableIncome;
+        healthInsurance_total = Math.max(0.049 * taxableIncome, 314.96);
+      } else if(taxMethod === "ryczalt") {
+        var marginRyc = parseFloat(document.getElementById('marginRyc').value) || 0;
+        var totalRevenue = fixedCosts * (1 + marginRyc/100);
+        revenuePerRG = totalRevenue / totalRG;
+        var rycRate = parseFloat(document.getElementById('rycRate').value) || 0;
+        var rycSalary = parseFloat(document.getElementById('rycSalary').value) || 8482.47;
+        tax_total = rycRate * totalRevenue;
+        if(totalRevenue <= 60000) {
+          healthInsurance_total = 0.09 * rycSalary;
+        } else if(totalRevenue <= 300000) {
+          healthInsurance_total = 0.15 * rycSalary;
+        } else {
+          healthInsurance_total = 1.80 * rycSalary;
+        }
+      }
+      
+      var taxPerRG = tax_total / totalRG;
+      var healthInsurancePerRG = healthInsurance_total / totalRG;
+      
+      profitPerRG = revenuePerRG - baseRGCost - (taxPerRG + healthInsurancePerRG);
+      
+      var grossRGCost = revenuePerRG * (1 + vatRate/100);
+      
+      var resultTable = `
+      <table class="result-table">
+        <tr>
+          <th>Opis</th>
+          <th>Wartość</th>
+        </tr>
+        <tr>
+          <td>Koszt r‑g (przed narzutem)</td>
+          <td>${baseRGCost.toFixed(2)} zł</td>
+        </tr>
+        <tr>
+          <td>Koszt r‑g netto(z narzutem)</td>
+          <td>${revenuePerRG.toFixed(2)} zł</td>
+        </tr>
+        <tr>
+          <td>Koszt r‑g brutto(po dodaniu VAT)</td>
+          <td>${grossRGCost.toFixed(2)} zł</td>
+        </tr>
+        <tr>
+          <td>Podatek (na 1 r‑g)</td>
+          <td>${taxPerRG.toFixed(2)} zł</td>
+        </tr>
+        <tr>
+          <td>Składka zdrowotna (na 1 r‑g)</td>
+          <td>${healthInsurancePerRG.toFixed(2)} zł</td>
+        </tr>
+        <tr>
+          <td>Zysk na 1 r‑g</td>
+          <td>${profitPerRG.toFixed(2)} zł</td>
+        </tr>
+      </table>
+      `;
+      
+      document.getElementById("results").innerHTML = resultTable;
+    }
+
+    toggleFields();
+  </script>
+</body>
+</html>

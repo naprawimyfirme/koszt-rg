@@ -78,15 +78,16 @@
       border-radius: 4px;
       font-size: 1rem;
     }
-    /* Układ dla sekcji składników i wykresu */
+    /* Układ dla sekcji składników i wykresu – ustawienie w kolumnie */
     #componentsChartSection {
       display: flex;
-      align-items: flex-start;
+      flex-direction: column;
+      align-items: center;
       margin-top: 20px;
-      flex-wrap: nowrap;
+      width: 100%;
     }
     #componentsList {
-      flex: 1;
+      width: 100%;
     }
     #componentsList p {
       margin: 5px 0;
@@ -98,9 +99,10 @@
       margin-right: 5px;
     }
     #chartWrapper {
-      width: 300px;
-      height: 300px;
-      margin-left: 20px;
+      width: 130px; /* zwiększone z 100px do 130px */
+      height: 130px; /* zwiększone z 100px do 130px */
+      margin-top: 20px;
+      /* usunięty margin-left, aby wykres był wyśrodkowany pod wynikami */
       flex-shrink: 0;
     }
     /* Upewniamy się, że canvas wypełnia cały kontener */
@@ -215,7 +217,7 @@
       var revenuePerRG = 0;
       var profitPerRG = 0;
       var totalRevenue = 0;
-
+      
       if(taxMethod === "liniowy") {
         var marginPct = parseFloat(document.getElementById('marginPct').value) || 0;
         revenuePerRG = baseRGCost * (1 + marginPct/100);
@@ -247,7 +249,10 @@
       
       // Rentowność (procentowo: zysk / przychód)
       var profitability = revenuePerRG ? (profitPerRG / revenuePerRG) * 100 : 0;
-
+      
+      // Dodajemy nagłówek "Wynik firmy"
+      var firmHeader = `<h2>Wynik firmy</h2>`;
+      
       // Sekcja "Koszt roboczogodziny"
       var wynikHTML = `
         <h3>🔧 Koszt roboczogodziny</h3>
@@ -255,8 +260,8 @@
         <p><strong>Koszt r‑g netto (po narzucie):</strong> ${revenuePerRG.toFixed(2)} zł</p>
         <p><strong>Koszt r‑g brutto (z VAT):</strong> ${grossRGCost.toFixed(2)} zł</p>
       `;
-
-      // Sekcja "Składniki kosztów r‑g" – lista składników po lewej, wykres po prawej
+      
+      // Sekcja "Składniki kosztów r‑g" – lista składników i wykres ustawione jeden pod drugim
       var skladnikiHTML = `
         <h3>📊 Składniki kosztów r‑g</h3>
         <div id="componentsChartSection">
@@ -268,19 +273,25 @@
             <p><span class="color-box" style="background-color:#9966FF;"></span><strong>Zysk:</strong> ${profitPerRG.toFixed(2)} zł</p>
           </div>
           <div id="chartWrapper">
-            <canvas id="pieChart" width="300" height="300"></canvas>
+            <canvas id="pieChart" width="130" height="130"></canvas>
           </div>
         </div>
       `;
-
+      
       // Sekcja "Podsumowanie"
       var podsumowanieHTML = `
-        <h3>Podsumowanie</h3>
-        <p><strong>Zysk:</strong> ${profitPerRG.toFixed(2)} zł 👈 Tyle ci zostaje na każdą r-g</p>
-        <p><strong>Rentowność:</strong> ${profitability.toFixed(2)}% 👈 Taka jest rentowność Twojej firmy</p>
+        <h3>💰Podsumowanie</h3>
+        <p><strong>Tyle zostaje z każdej godziny na czysto 👉:</strong> ${profitPerRG.toFixed(2)} zł</p>
+        <p><strong>Taka jest rentwność Twojej firmy 👉:</strong> ${profitability.toFixed(2)}%</p>
       `;
-
-      document.getElementById("mergedSection").innerHTML = wynikHTML + skladnikiHTML + podsumowanieHTML;
+      
+      document.getElementById("mergedSection").innerHTML = firmHeader + wynikHTML + skladnikiHTML + podsumowanieHTML;
+      
+      // Przed utworzeniem nowego wykresu niszczymy stary, jeśli istnieje
+      if(pieChart) {
+        pieChart.destroy();
+        pieChart = null;
+      }
       
       // Dane do wykresu kołowego
       var pieData = [
@@ -292,28 +303,23 @@
       ];
       var pieLabels = ["Koszty działalności", "Podatek dochodowy", "Składka zdrowotna", "VAT", "Zysk"];
       var pieColors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
-
+      
       var ctx = document.getElementById('pieChart').getContext('2d');
-      if(pieChart) {
-        pieChart.data.datasets[0].data = pieData;
-        pieChart.update();
-      } else {
-        pieChart = new Chart(ctx, {
-          type: 'pie',
-          data: {
-            labels: pieLabels,
-            datasets: [{
-              data: pieData,
-              backgroundColor: pieColors
-            }]
-          },
-          options: {
-            plugins: {
-              legend: { display: false }
-            }
+      pieChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: pieLabels,
+          datasets: [{
+            data: pieData,
+            backgroundColor: pieColors
+          }]
+        },
+        options: {
+          plugins: {
+            legend: { display: false }
           }
-        });
-      }
+        }
+      });
     }
     toggleFields();
   </script>

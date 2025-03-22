@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <title>Kalkulator Kosztu r‑g</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Ogólne style strony */
     body {
@@ -19,7 +20,6 @@
       margin: 0 auto;
       padding: 0 15px;
     }
-    /* Stylizacja inspirowana podanymi elementami */
     .t68 {
       background-color: #fff;
       padding: 40px 0;
@@ -55,7 +55,6 @@
     .dh-btn-primary:hover {
       background-color: #363636;
     }
-    /* Style kalkulatora */
     .calculator-form {
       background-color: #f0f0f0;
       padding: 20px;
@@ -79,6 +78,36 @@
       border-radius: 4px;
       font-size: 1rem;
     }
+    /* Układ dla sekcji składników i wykresu */
+    #componentsChartSection {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 20px;
+      flex-wrap: nowrap;
+    }
+    #componentsList {
+      flex: 1;
+    }
+    #componentsList p {
+      margin: 5px 0;
+    }
+    #componentsList span.color-box {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+      margin-right: 5px;
+    }
+    #chartWrapper {
+      width: 300px;
+      height: 300px;
+      margin-left: 20px;
+      flex-shrink: 0;
+    }
+    /* Upewniamy się, że canvas wypełnia cały kontener */
+    #chartWrapper canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
   </style>
 </head>
 <body>
@@ -95,34 +124,28 @@
                 <option value="ryczalt">Ryczałt od przychodów ewidencjonowanych</option>
               </select>
             </div>
-
             <div class="form-group">
               <label for="fixedCosts">Całkowite koszty firmy (zł/miesiąc):</label>
               <input type="number" id="fixedCosts" name="fixedCosts" step="0.01">
             </div>
-
             <div class="form-group">
               <label for="numOperationalEmployees">Liczba pracowników (bezpośrednio wykonujących usługi):</label>
               <input type="number" id="numOperationalEmployees" name="numOperationalEmployees" step="1">
             </div>
-
             <div class="form-group">
               <label for="avgHours">Średnia liczba r‑g na pracownika w miesiącu:</label>
               <input type="number" id="avgHours" name="avgHours" step="0.01">
             </div>
-
             <!-- Narzut dla liniówki -->
             <div id="marginSection" class="form-group">
               <label for="marginPct">Narzut firmy (%)</label>
               <input type="number" id="marginPct" name="marginPct" step="0.01">
             </div>
-
             <!-- Narzut dla ryczałtu -->
             <div id="marginRycSection" class="form-group hidden" style="display:none;">
               <label for="marginRyc">Narzut (%):</label>
               <input type="number" id="marginRyc" name="marginRyc" step="0.01">
             </div>
-
             <!-- Pola specyficzne dla ryczałtu -->
             <div id="rycInput" class="hidden" style="display:none;">
               <div class="form-group">
@@ -140,21 +163,24 @@
                 <input type="number" id="rycSalary" name="rycSalary" step="0.01" value="8482.47">
               </div>
             </div>
-
             <div class="form-group">
               <label for="vatRate">Stawka VAT (%):</label>
               <input type="number" id="vatRate" name="vatRate" step="0.01">
             </div>
-
             <button type="button" class="dh-btn-primary" onclick="calculate()">Oblicz</button>
           </form>
         </div>
+        <!-- Kontener na wyniki obliczeń -->
         <div id="results"></div>
+        <!-- Scalone sekcje: składniki kosztów + wykres -->
+        <div id="mergedSection"></div>
       </div>
     </div>
   </section>
 
   <script>
+    var pieChart; // globalna zmienna dla wykresu
+
     function toggleFields() {
       var taxMethod = document.getElementById('taxMethod').value;
       if (taxMethod === "liniowy") {
@@ -186,9 +212,9 @@
       
       var tax_total = 0;
       var healthInsurance_total = 0;
-      var revenuePerRG = 0; // cena za 1 r‑g
+      var revenuePerRG = 0;
       var profitPerRG = 0;
-      var totalRevenue = 0; // całkowity przychód
+      var totalRevenue = 0;
 
       if(taxMethod === "liniowy") {
         var marginPct = parseFloat(document.getElementById('marginPct').value) || 0;
@@ -215,47 +241,80 @@
       
       var taxPerRG = tax_total / totalRG;
       var healthInsurancePerRG = healthInsurance_total / totalRG;
-      
       profitPerRG = revenuePerRG - baseRGCost - (taxPerRG + healthInsurancePerRG);
-      
       var grossRGCost = revenuePerRG * (1 + vatRate/100);
-
-      // Przygotowanie ścieżek obliczeniowych
-      var formulaBaseRGCost = `${fixedCosts.toFixed(2)} / ${totalRG.toFixed(2)} = ${baseRGCost.toFixed(2)}`;
+      var vatValue = grossRGCost - revenuePerRG;
       
-      var formulaRevenuePerRG = "";
-      if(taxMethod === "liniowy") {
-          var marginPct = parseFloat(document.getElementById('marginPct').value) || 0;
-          formulaRevenuePerRG = `${baseRGCost.toFixed(2)} * (1 + ${marginPct.toFixed(2)}/100) = ${revenuePerRG.toFixed(2)}`;
-      } else if(taxMethod === "ryczalt") {
-          var marginRyc = parseFloat(document.getElementById('marginRyc').value) || 0;
-          formulaRevenuePerRG = `(${fixedCosts.toFixed(2)} * (1 + ${marginRyc.toFixed(2)}/100)) / ${totalRG.toFixed(2)} = ${revenuePerRG.toFixed(2)}`;
-      }
+      // Rentowność (procentowo: zysk / przychód)
+      var profitability = revenuePerRG ? (profitPerRG / revenuePerRG) * 100 : 0;
 
-      var formulaGrossRGCost = `${revenuePerRG.toFixed(2)} * (1 + ${vatRate.toFixed(2)}/100) = ${grossRGCost.toFixed(2)}`;
+      // Sekcja "Koszt roboczogodziny"
+      var wynikHTML = `
+        <h3>🔧 Koszt roboczogodziny</h3>
+        <p><strong>Koszt r‑g dla firmy (przed narzutem):</strong> ${baseRGCost.toFixed(2)} zł</p>
+        <p><strong>Koszt r‑g netto (po narzucie):</strong> ${revenuePerRG.toFixed(2)} zł</p>
+        <p><strong>Koszt r‑g brutto (z VAT):</strong> ${grossRGCost.toFixed(2)} zł</p>
+      `;
 
-      // Sekcja Wynik – wyświetlamy wartość z dopiskiem "zł" oraz ścieżkę obliczeń
-      var resultHTML = `
-        <h3>Wynik</h3>
-        <div>
-          <p>Koszt r‑g dla firmy (przed narzutem): ${baseRGCost.toFixed(2)} zł <br><small>${formulaBaseRGCost}</small></p>
-          <p>Koszt r‑g netto (z narzutem): ${revenuePerRG.toFixed(2)} zł <br><small>${formulaRevenuePerRG}</small></p>
-          <p>Koszt r‑g brutto (po dodaniu VAT): ${grossRGCost.toFixed(2)} zł <br><small>${formulaGrossRGCost}</small></p>
-        </div>
-        <h3>Składniki w r‑g</h3>
-        <div>
-          <p>Koszty działalności: ${baseRGCost.toFixed(2)} zł</p>
-          <p>Podatek dochodowy: ${taxPerRG.toFixed(2)} zł</p>
-          <p>Składka zdrowotna: ${healthInsurancePerRG.toFixed(2)} zł</p>
-          <p>Zysk na czysto: ${profitPerRG.toFixed(2)} zł</p>
-          <p>VAT: ${(grossRGCost - revenuePerRG).toFixed(2)} zł</p>
+      // Sekcja "Składniki kosztów r‑g" – lista składników po lewej, wykres po prawej
+      var skladnikiHTML = `
+        <h3>📊 Składniki kosztów r‑g</h3>
+        <div id="componentsChartSection">
+          <div id="componentsList">
+            <p><span class="color-box" style="background-color:#FF6384;"></span><strong>Koszty działalności:</strong> ${baseRGCost.toFixed(2)} zł</p>
+            <p><span class="color-box" style="background-color:#36A2EB;"></span><strong>Podatek dochodowy:</strong> ${taxPerRG.toFixed(2)} zł</p>
+            <p><span class="color-box" style="background-color:#FFCE56;"></span><strong>Składka zdrowotna:</strong> ${healthInsurancePerRG.toFixed(2)} zł</p>
+            <p><span class="color-box" style="background-color:#4BC0C0;"></span><strong>VAT:</strong> ${vatValue.toFixed(2)} zł</p>
+            <p><span class="color-box" style="background-color:#9966FF;"></span><strong>Zysk:</strong> ${profitPerRG.toFixed(2)} zł</p>
+          </div>
+          <div id="chartWrapper">
+            <canvas id="pieChart" width="300" height="300"></canvas>
+          </div>
         </div>
       `;
-      
-      document.getElementById("results").innerHTML = resultHTML;
-      // Usunięto sekcję graficznej prezentacji
-    }
 
+      // Sekcja "Podsumowanie"
+      var podsumowanieHTML = `
+        <h3>Podsumowanie</h3>
+        <p><strong>Zysk:</strong> ${profitPerRG.toFixed(2)} zł 👈 Tyle ci zostaje na każdą r-g</p>
+        <p><strong>Rentowność:</strong> ${profitability.toFixed(2)}% 👈 Taka jest rentowność Twojej firmy</p>
+      `;
+
+      document.getElementById("mergedSection").innerHTML = wynikHTML + skladnikiHTML + podsumowanieHTML;
+      
+      // Dane do wykresu kołowego
+      var pieData = [
+        baseRGCost,
+        taxPerRG,
+        healthInsurancePerRG,
+        vatValue,
+        profitPerRG
+      ];
+      var pieLabels = ["Koszty działalności", "Podatek dochodowy", "Składka zdrowotna", "VAT", "Zysk"];
+      var pieColors = ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0", "#9966FF"];
+
+      var ctx = document.getElementById('pieChart').getContext('2d');
+      if(pieChart) {
+        pieChart.data.datasets[0].data = pieData;
+        pieChart.update();
+      } else {
+        pieChart = new Chart(ctx, {
+          type: 'pie',
+          data: {
+            labels: pieLabels,
+            datasets: [{
+              data: pieData,
+              backgroundColor: pieColors
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { display: false }
+            }
+          }
+        });
+      }
+    }
     toggleFields();
   </script>
 </body>

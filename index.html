@@ -2,7 +2,7 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8">
-  <title>Kalkulator Kosztu r‑g</title>
+  <title>Kalkulator Kosztu roboczogodziny</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <style>
     /* Ogólne style strony */
@@ -116,7 +116,7 @@
   <section class="t68">
     <div class="container t279">
       <div class="t69">
-        <h2 class="t73">Kalkulator Kosztu r‑g</h2>
+        <h2 class="t73">Kalkulator Kosztu roboczogodziny</h2>
         <div class="calculator-form">
           <form id="calculatorForm">
             <div class="form-group">
@@ -256,14 +256,14 @@
       // Sekcja "Koszt roboczogodziny"
       var wynikHTML = `
         <h3>🔧 Koszt roboczogodziny</h3>
-        <p><strong>Koszt r‑g dla firmy (przed narzutem):</strong> ${baseRGCost.toFixed(2)} zł</p>
-        <p><strong>Koszt r‑g netto (po narzucie):</strong> ${revenuePerRG.toFixed(2)} zł</p>
-        <p><strong>Koszt r‑g brutto (z VAT):</strong> ${grossRGCost.toFixed(2)} zł</p>
+        <p><strong>Koszt roboczogodziny dla firmy (przed narzutem):</strong> ${baseRGCost.toFixed(2)} zł</p>
+        <p><strong>Koszt roboczogodziny netto (po narzucie):</strong> ${revenuePerRG.toFixed(2)} zł</p>
+        <p><strong>Koszt roboczogodziny brutto (z VAT):</strong> ${grossRGCost.toFixed(2)} zł</p>
       `;
       
       // Sekcja "Składniki kosztów r‑g" – lista składników i wykres ustawione jeden pod drugim
       var skladnikiHTML = `
-        <h3>📊 Składniki kosztów r‑g</h3>
+        <h3>📊 Składniki kosztów roboczogodziny</h3>
         <div id="componentsChartSection">
           <div id="componentsList">
             <p><span class="color-box" style="background-color:#FF6384;"></span><strong>Koszty działalności:</strong> ${baseRGCost.toFixed(2)} zł</p>
@@ -280,7 +280,7 @@
       
       // Sekcja "Podsumowanie"
       var podsumowanieHTML = `
-        <h3>💰Podsumowanie</h3>
+        <h3>💰Podsumowanie roboczogodziny</h3>
         <p><strong>Tyle zostaje z każdej godziny na czysto 👉:</strong> ${profitPerRG.toFixed(2)} zł</p>
         <p><strong>Taka jest rentwność Twojej firmy 👉:</strong> ${profitability.toFixed(2)}%</p>
       `;

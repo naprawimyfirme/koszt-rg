@@ -345,7 +345,7 @@
         </div>
         <div class="dual-input-row">
           <div class="dual-input-item">
-            <input type="number" id="marginPct" class="form-control" value="30" step="0.1" min="0" placeholder="np. 30" oninput="syncMarginFromPct()">
+            <input type="number" id="marginPct" class="form-control" step="0.1" min="0" placeholder="np. 30" oninput="syncMarginFromPct()">
             <span class="dual-input-label">%&nbsp;narzutu</span>
           </div>
           <div class="dual-input-sep">→</div>
@@ -367,7 +367,7 @@
         </div>
         <div class="dual-input-row">
           <div class="dual-input-item">
-            <input type="number" id="marginRyc" class="form-control" value="30" step="0.1" min="0" placeholder="np. 30" oninput="syncMarginFromPct()">
+            <input type="number" id="marginRyc" class="form-control" step="0.1" min="0" placeholder="np. 30" oninput="syncMarginFromPct()">
             <span class="dual-input-label">%&nbsp;narzutu</span>
           </div>
           <div class="dual-input-sep">→</div>
@@ -742,7 +742,8 @@
     });
 
     document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    setTimeout(sendHeight, 400);
+    setTimeout(sendHeight, 300);
+    setTimeout(sendHeight, 700); // drugi pomiar po renderze wykresu
   }
 
   function sendHeight() {

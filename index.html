@@ -405,7 +405,7 @@
               <span class="tip-box">Kwota ogłaszana przez GUS co kwartał. Służy do wyliczenia ryczałtowej składki zdrowotnej. Sprawdź aktualną wartość na stronie ZUS – ta tu jest przybliżona.</span>
             </span>
           </div>
-          <input type="number" id="rycSalary" class="form-control" value="8482.47" step="0.01">
+          <input type="number" id="rycSalary" class="form-control" value="9228.64" step="0.01">
         </div>
       </div>
 
@@ -540,7 +540,7 @@
       revenuePerRG    = totalRevenue / totalRG;
       var taxableInc  = fixedCosts * (marginPct / 100);
       tax_total       = 0.19 * taxableInc;
-      health_total    = Math.max(0.049 * taxableInc, 0.09 * 4666);
+      health_total    = Math.max(0.049 * taxableInc, 0.09 * 4806);
 
     } else if (taxMethod === 'skala') {
       var marginPct   = parseFloat(document.getElementById('marginPct').value) || 0;
@@ -558,7 +558,7 @@
         annualTax = 90000 * 0.12 + (annualIncome - 120000) * 0.32;
       }
       tax_total    = annualTax / 12;
-      var minHealthBase = 4666;
+      var minHealthBase = 4806;
       health_total = Math.max(0.09 * monthlyIncome, 0.09 * minHealthBase);
 
     } else {
@@ -567,7 +567,7 @@
       totalRevenue    = fixedCosts * (1 + marginRyc / 100);
       revenuePerRG    = totalRevenue / totalRG;
       var rycRate     = parseFloat(document.getElementById('rycRate').value) || 0;
-      var rycSalary   = parseFloat(document.getElementById('rycSalary').value) || 8482.47;
+      var rycSalary   = parseFloat(document.getElementById('rycSalary').value) || 9228.64;
       var annualRev   = totalRevenue * 12;
       tax_total       = rycRate * totalRevenue;
       if      (annualRev <= 60000)  health_total = 0.09 * (0.60 * rycSalary);
